@@ -1,0 +1,46 @@
+@import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap');
+@import "tailwindcss";
+
+@theme {
+  --font-pixel: "Press Start 2P", monospace;
+  --font-mono: "VT323", "Courier New", monospace;
+  
+  --shadow-pixel: 4px 4px 0px #000000;
+  --shadow-pixel-sm: 2px 2px 0px #000000;
+  --shadow-pixel-lg: 6px 6px 0px #000000;
+  --shadow-pixel-primary: 4px 4px 0px #e94560;
+  --shadow-pixel-accent: 4px 4px 0px #f5a623;
+
+  --color-bg: #1a1a2e;
+  --color-surface: #16213e;
+  --color-primary: #e94560;
+  --color-secondary: #0f3460;
+  --color-accent: #f5a623;
+  --color-text: #eaeaea;
+  --color-muted: #8892a4;
+  --color-success: #4ade80;
+  --color-border: #000000;
+}
+
+@utility border-pixel {
+  border: 2px solid #000000;
+}
+
+@utility border-pixel-thick {
+  border: 4px solid #000000;
+}
+
+/* Base styles to apply the retro design system */
+body {
+  background-color: var(--color-bg);
+  color: var(--color-text);
+  font-family: var(--font-mono);
+  font-size: 20px; /* Base font size for VT323 */
+  margin: 0;
+  image-rendering: pixelated;
+}
+
+/* Sharp corners everywhere */
+* {
+  border-radius: 0px !important;
+}

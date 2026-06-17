@@ -1,36 +1,61 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Bumbul Frontend (Monorepo)
 
-## Getting Started
+Bumbul is a premium, pixel-art retro-themed dating and social web application. This repository contains the complete frontend workspace built using a modern **pnpm Monorepo** structure.
 
-First, run the development server:
+## 🚀 Tech Stack
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+- **Monorepo Manager**: `pnpm` Workspaces
+- **Public Website / Landing & SEO Pages**: Next.js 15 (App Router, Tailwind CSS v4)
+- **App Dashboard / Private SPA Pages**: React 19 + Vite 8 (TypeScript, Zustand, React Router Dom v7, Tailwind CSS v4)
+- **Shared Package**: Common TypeScript interfaces, models, and utility functions shared between the web and app packages.
+
+---
+
+## 📂 Project Structure
+
+```
+/
+├── apps/
+│   ├── web/        # Next.js 15 application (SEO pages: Landing, About, Contact, Membership, etc.)
+│   └── app/        # React 19 + Vite SPA (Private dashboard: Swipe, Chat, matches, Profile editing, etc.)
+├── shared/         # Shared TypeScript interfaces (User, Photo, Match, ChatMessage, etc.)
+├── package.json    # Monorepo configuration and workspace scripts
+└── pnpm-workspace.yaml
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+---
 
-You can start editing the page by modifying `app/page.js`. The page auto-updates as you edit the file.
+## 🛠️ Getting Started
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+### Prerequisites
 
-## Learn More
+1. Make sure you have **Node.js** (v18 or higher) installed.
+2. Install **pnpm** globally:
+   ```bash
+   npm install -g pnpm
+   ```
 
-To learn more about Next.js, take a look at the following resources:
+### Installation
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+Install all dependencies for the entire workspace (including shared package and apps):
+```bash
+pnpm install
+```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+### Running Locally
 
-## Deploy on Vercel
+To start the development servers for **both** the Next.js landing page and the React SPA dashboard in parallel, run:
+```bash
+pnpm dev
+```
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+- **Next.js Landing page**: Runs on [http://localhost:3000](http://localhost:3000)
+- **React SPA Dashboard**: Runs on [http://127.0.0.1:5173](http://127.0.0.1:5173)
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+---
+
+## 🔒 Current Status (Mock Data Mode)
+
+Currently, the frontend runs completely in **Mock Data Mode** using client-side Zustand store and cookies (`mockStore.ts`) to simulate interactions (swipes, registrations, matches, and real-time chat). This makes the frontend fully functional and runnable in isolation for UI/UX testing and development purposes.
+
+For integration with the Django REST backend, please refer to the integration guide and update the API client layer (using the pre-configured endpoints and serializers defined in the backend).
