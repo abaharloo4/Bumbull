@@ -28,9 +28,9 @@ export const ProfilePage: React.FC = () => {
     setTimeout(() => setCopied(false), 2000);
   };
 
-  const handleSwipe = (type: 'like' | 'pass' | 'super') => {
+  const handleSwipe = async (type: 'like' | 'pass' | 'super') => {
     if (!user) return;
-    swipeAction(user.id, type);
+    await swipeAction(user.id, type);
     navigate('/swipe');
   };
 
@@ -69,7 +69,14 @@ export const ProfilePage: React.FC = () => {
           <div className="h-80 bg-secondary relative flex items-center justify-center text-9xl select-none">
             {user.photosList && user.photosList.length > 0 ? (
               // If there are uploaded files or emojis
-              <span className="animate-pulse">{user.photosList[activePhotoIdx]?.image_url}</span>
+              user.photosList[activePhotoIdx]?.image_url.startsWith('blob:') ||
+              user.photosList[activePhotoIdx]?.image_url.startsWith('data:') ||
+              user.photosList[activePhotoIdx]?.image_url.startsWith('/') ||
+              user.photosList[activePhotoIdx]?.image_url.startsWith('http') ? (
+                <img src={user.photosList[activePhotoIdx].image_url} alt="" className="w-full h-full object-cover" />
+              ) : (
+                <span className="animate-pulse">{user.photosList[activePhotoIdx]?.image_url}</span>
+              )
             ) : (
               <span>{user.avatarEmoji}</span>
             )}

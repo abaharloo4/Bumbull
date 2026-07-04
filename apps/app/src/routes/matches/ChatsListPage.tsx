@@ -4,22 +4,23 @@ import { useMockStore } from '../../store/mockStore';
 import { PixelCard, PixelAvatar, PixelButton } from '../../components/ui/PixelComponents';
 import type { MockUser } from '../../store/mockStore';
 
-export const MatchesPage: React.FC = () => {
+export const ChatsListPage: React.FC = () => {
   const navigate = useNavigate();
   const { matches } = useMockStore();
 
-  const newMatches = matches.filter(match => !match.lastMessage);
+  const activeChats = matches.filter(match => match.lastMessage);
 
   return (
     <div className="flex-1 p-6 text-left font-mono select-none">
       <div className="mb-8">
-        <h1 className="font-pixel text-lg text-white mb-2">NEW CONNECTIONS</h1>
-        <p className="font-mono text-xs text-muted">Mutual matches waiting for a conversation start</p>
+        <h1 className="font-pixel text-lg text-white mb-2">ACTIVE CHATS</h1>
+        <p className="font-mono text-xs text-muted">Your ongoing retro transmissions</p>
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-        {newMatches.map((match) => {
+        {activeChats.map((match) => {
           const partner = match.user2 as MockUser;
+          const lastMsg = match.lastMessage;
 
           return (
             <PixelCard
@@ -49,21 +50,23 @@ export const MatchesPage: React.FC = () => {
                       {partner.first_name.toUpperCase()}
                     </span>
                     <span className="font-mono text-[10px] text-muted">
-                      NEW MATCH
+                      {lastMsg ? new Date(lastMsg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : ''}
                     </span>
                   </div>
 
                   <p className="font-mono text-xs text-muted truncate mb-2">
-                    Unlock conversation...
+                    {lastMsg ? lastMsg.content : ''}
                   </p>
 
                   <div className="flex justify-between items-center">
                     <span className="font-pixel text-[6px] px-2 py-1 bg-bg border-2 border-black text-accent">
                       {partner.city_lives?.toUpperCase()}
                     </span>
-                    <span className="font-pixel text-[8px] bg-primary text-white border-2 border-black px-2 py-0.5 animate-pulse">
-                      SAY HI!
-                    </span>
+                    {(match.unreadCount ?? 0) > 0 && (
+                      <span className="font-pixel text-[8px] bg-[#f43f5e] text-white border-2 border-black px-2 py-0.5 animate-bounce">
+                        {match.unreadCount} NEW
+                      </span>
+                    )}
                   </div>
                 </div>
               </div>
@@ -71,17 +74,17 @@ export const MatchesPage: React.FC = () => {
           );
         })}
 
-        {newMatches.length === 0 && (
+        {activeChats.length === 0 && (
           <div className="col-span-full py-20 flex flex-col items-center justify-center text-center bg-surface border-4 border-black p-8 shadow-pixel">
             <div className="w-16 h-16 bg-bg border-4 border-black flex items-center justify-center text-3xl mb-6">
-              💔
+              💬
             </div>
-            <h3 className="font-pixel text-xs text-white mb-2">NO NEW MATCHES</h3>
+            <h3 className="font-pixel text-xs text-white mb-2">NO ACTIVE CONVERSATIONS</h3>
             <p className="font-mono text-sm text-muted mb-6">
-              Keep swiping and liking. Mutual interest unlocks active coordinates!
+              Go to your new connections and send a greeting message!
             </p>
-            <PixelButton onClick={() => navigate('/swipe')} variant="primary" className="py-2.5">
-              GO SWIPING
+            <PixelButton onClick={() => navigate('/matches')} variant="primary" className="py-2.5">
+              NEW CONNECTIONS
             </PixelButton>
           </div>
         )}

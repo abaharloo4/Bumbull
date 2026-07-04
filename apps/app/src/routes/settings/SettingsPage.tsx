@@ -58,7 +58,7 @@ export const SettingsPage: React.FC = () => {
   };
 
   const handleDeactivate = () => {
-    if (window.confirm('Are you sure you want to deactivate your Bumbul account? Your coordinates will be lost!')) {
+    if (window.confirm('Are you sure you want to deactivate your Bumbull account? Your coordinates will be lost!')) {
       logout();
       navigate('/login');
     }

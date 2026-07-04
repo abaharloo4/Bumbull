@@ -14,8 +14,6 @@ export const EditProfilePage: React.FC = () => {
   const [height, setHeight] = useState(currentUser?.height_cm?.toString() || '175');
   const [cityLives, setCityLives] = useState(currentUser?.city_lives || 'tehran');
   const [cityBirth, setCityBirth] = useState(currentUser?.city_birth || 'tehran');
-  const [lat, setLat] = useState(currentUser?.latitude?.toString() || '35.6892');
-  const [lon, setLon] = useState(currentUser?.longitude?.toString() || '51.3890');
   const [funQ, setFunQ] = useState(currentUser?.fun_question || 'My absolute favorite game is...');
   const [funA, setFunA] = useState(currentUser?.fun_answer || '');
   
@@ -52,8 +50,6 @@ export const EditProfilePage: React.FC = () => {
       height_cm: parseInt(height, 10),
       city_lives: cityLives,
       city_birth: cityBirth,
-      latitude: parseFloat(lat),
-      longitude: parseFloat(lon),
       fun_question: funQ,
       fun_answer: funA,
       interestsList: updatedInterests as any
@@ -75,8 +71,7 @@ export const EditProfilePage: React.FC = () => {
     if (!files || files.length === 0) return;
     const file = files[0];
     if (file) {
-      const blobUrl = URL.createObjectURL(file);
-      addPhoto(blobUrl);
+      addPhoto(file);
     }
   };
 
@@ -105,13 +100,6 @@ export const EditProfilePage: React.FC = () => {
     reorderPhotos(updatedOrders);
   };
 
-  const simulateLocation = () => {
-    // Generate random mock Tehran coordinates
-    const randomLat = (35.6 + Math.random() * 0.2).toFixed(4);
-    const randomLon = (51.3 + Math.random() * 0.2).toFixed(4);
-    setLat(randomLat);
-    setLon(randomLon);
-  };
 
   if (!currentUser) return null;
 
@@ -252,23 +240,7 @@ export const EditProfilePage: React.FC = () => {
             />
           </div>
 
-          {/* Location coordinate trigger */}
-          <div className="border-2 border-black bg-bg p-4 flex flex-col sm:flex-row justify-between items-center gap-4">
-            <div className="text-left w-full sm:w-auto">
-              <span className="font-pixel text-[9px] text-white block mb-1">GPS COORDINATES</span>
-              <span className="font-mono text-xs text-muted block">
-                Lat: {lat} | Lon: {lon}
-              </span>
-            </div>
-            <PixelButton
-              type="button"
-              onClick={simulateLocation}
-              variant="secondary"
-              size="sm"
-            >
-              SIMULATE CURRENT LOCATION
-            </PixelButton>
-          </div>
+
 
           {/* Interests */}
           <div className="flex flex-col gap-2">

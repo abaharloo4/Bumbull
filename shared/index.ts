@@ -69,3 +69,52 @@ export interface ChatMessage {
   timestamp: string;
   is_read: boolean;
 }
+
+export interface EventParticipant {
+  id: number;
+  user: User;
+  status: 'attending' | 'waitlist' | 'cancelled';
+  joined_at: string;
+  updated_at: string;
+}
+
+export interface EventMessage {
+  id: number;
+  sender: User;
+  content: string;
+  timestamp: string;
+}
+
+export interface Event {
+  id: number;
+  title: string;
+  description: string;
+  city: string;
+  area_label: string;
+  date_time: string;
+  ends_at?: string;
+  join_deadline?: string;
+  capacity: number;
+  current_participants: number;
+  waitlist_count: number;
+  spots_left: number;
+  is_full: boolean;
+  join_is_open: boolean;
+  image?: string;
+  created_by: User;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+  // User context fields
+  is_joined: boolean;
+  is_waitlisted: boolean;
+  can_join: boolean;
+  can_leave: boolean;
+  starts_in: string;
+  // Private details (visible only to registered participants)
+  full_address?: string;
+  location_details?: string;
+  participants?: EventParticipant[];
+  messages?: EventMessage[];
+}
+

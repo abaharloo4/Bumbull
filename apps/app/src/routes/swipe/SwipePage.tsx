@@ -36,11 +36,11 @@ export const SwipePage: React.FC = () => {
   const likeOpacity = useTransform(x, [0, 100], [0, 1]);
   const nopeOpacity = useTransform(x, [-100, 0], [1, 0]);
 
-  const handleSwipe = (direction: 'like' | 'pass' | 'super') => {
+  const handleSwipe = async (direction: 'like' | 'pass' | 'super') => {
     if (!currentSwipeProfile) return;
 
     const profile = currentSwipeProfile;
-    const result = swipeAction(profile.id, direction);
+    const result = await swipeAction(profile.id, direction);
 
     if (result.matchCreated) {
       setMatchAlert({
@@ -114,7 +114,11 @@ export const SwipePage: React.FC = () => {
                 <PixelCard hoverShadow={false} className="w-full h-full p-0 overflow-hidden relative border-4 border-black flex flex-col">
                   {/* Photo Display Area */}
                   <div className="flex-1 bg-secondary relative flex items-center justify-center text-8xl overflow-hidden select-none">
-                    <span className="animate-pulse">{currentSwipeProfile.avatarEmoji}</span>
+                    {currentSwipeProfile.photosList && currentSwipeProfile.photosList.length > 0 ? (
+                      <img src={currentSwipeProfile.photosList[0].image_url} alt="" className="w-full h-full object-cover" />
+                    ) : (
+                      <span className="animate-pulse">{currentSwipeProfile.avatarEmoji}</span>
+                    )}
                     
                     {/* Visual Overlay Indicator while dragging */}
                     <motion.div
@@ -178,8 +182,8 @@ export const SwipePage: React.FC = () => {
               <p className="font-mono text-sm text-muted mb-6">
                 No more characters left in your coordinates. Check back later or expand your discovery filters!
               </p>
-              <PixelButton onClick={() => navigate('/discovery')} variant="secondary" className="py-2.5">
-                DISCOVERY PANEL
+              <PixelButton onClick={() => navigate('/events')} variant="secondary" className="py-2.5">
+                RETRO EVENTS
               </PixelButton>
             </div>
           )}

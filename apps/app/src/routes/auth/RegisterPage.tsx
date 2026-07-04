@@ -5,7 +5,7 @@ import { PixelButton, PixelCard, PixelInput, PixelSelect, PixelProgressBar } fro
 
 export const RegisterPage: React.FC = () => {
   const navigate = useNavigate();
-  const { regStep, regData, updateRegistrationStep, completeRegistration } = useMockStore();
+  const { regStep, regData, updateRegistrationStep, completeRegistration, updateProfile, currentUser, checkAuth } = useMockStore();
 
   // Step 1 Form States
   const [phoneNumber, setPhoneNumber] = useState(regData.phone_number || '');
@@ -15,26 +15,60 @@ export const RegisterPage: React.FC = () => {
   const [gender, setGender] = useState(regData.gender || 'M');
   const [password, setPassword] = useState(regData.password || '');
   const [passwordConfirm, setPasswordConfirm] = useState(regData.passwordConfirm || '');
-  const [inviteCode, setInviteCode] = useState(regData.invite_code || '');
+  const inviteCode = regData.invite_code || '';
 
   // Step 2 Verification state
   const [verificationOtp, setVerificationOtp] = useState('');
   
   // Step 3 Profile States
-  const [bio, setBio] = useState('');
-  const [height, setHeight] = useState('170');
-  const [cityLives, setCityLives] = useState('tehran');
-  const [cityBirth, setCityBirth] = useState('tehran');
-  const [interests, setInterests] = useState<string[]>([]);
-  const [funQ, setFunQ] = useState('My absolute favorite game is...');
-  const [funA, setFunA] = useState('');
+  const [bio, setBio] = useState(currentUser?.biography || '');
+  const [height, setHeight] = useState(currentUser?.height_cm?.toString() || '170');
+  const [cityLives, setCityLives] = useState(currentUser?.city_lives || 'tehran');
+  const [cityBirth, setCityBirth] = useState(currentUser?.city_birth || 'tehran');
+  const [interests, setInterests] = useState<string[]>(
+    currentUser?.interestsList?.map(i => i.id.toString()) || []
+  );
+  const [funQ, setFunQ] = useState(currentUser?.fun_question || 'My absolute favorite game is...');
+  const [funA, setFunA] = useState(currentUser?.fun_answer || '');
 
-  // Step 4 Photo States (Blob urls)
-  const [uploadedPhotos, setUploadedPhotos] = useState<string[]>([
-    '🧔', '💻', '☕' // Default mock pixel assets
-  ]);
+  // Step 4 Photo States (File and preview blob urls)
+  const [uploadedPhotos, setUploadedPhotos] = useState<string[]>([]);
+  const [photoFiles, setPhotoFiles] = useState<File[]>([]);
 
   const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
+
+  React.useEffect(() => {
+    if (currentUser) {
+      if (currentUser.photosList && currentUser.photosList.length >= 3) {
+        navigate('/swipe');
+      } else if (currentUser.biography && currentUser.interestsList && currentUser.interestsList.length >= 3) {
+        updateRegistrationStep(4, {});
+      } else {
+        updateRegistrationStep(3, {});
+      }
+    }
+  }, [currentUser, navigate, updateRegistrationStep]);
+
+  React.useEffect(() => {
+    let intervalId: any;
+    if (regStep === 2) {
+      intervalId = setInterval(async () => {
+        try {
+          const authenticated = await checkAuth();
+          if (authenticated) {
+            setError('');
+          }
+        } catch (e) {
+          // ignore
+        }
+      }, 3000);
+    }
+    return () => {
+      if (intervalId) clearInterval(intervalId);
+    };
+  }, [regStep, checkAuth]);
+
 
   const cityOptions = [
     { value: 'tehran', label: 'Tehran' },
@@ -43,8 +77,9 @@ export const RegisterPage: React.FC = () => {
     { value: 'gorgan', label: 'Gorgan' }
   ];
 
-  const handleStep1Submit = (e: React.FormEvent) => {
+  const handleStep1Submit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setError('');
     if (!phoneNumber) return setError('Phone number is required');
     if (!/^09\d{9}$/.test(phoneNumber)) return setError('Phone number must be 11 digits starting with 09');
     if (!firstName) return setError('First Name is required');
@@ -58,43 +93,60 @@ export const RegisterPage: React.FC = () => {
     let age = today.getFullYear() - birthDate.getFullYear();
     const m = today.getMonth() - birthDate.getMonth();
     if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) age--;
-    if (age < 18) return setError('You must be at least 18 years old to join Bumbul');
+    if (age < 18) return setError('You must be at least 18 years old to join Bumbull');
 
-    // Generate random OTP code
-    const generated = Math.floor(100000 + Math.random() * 900000).toString();
-    setVerificationOtp(generated);
-
-    updateRegistrationStep(2, {
-      phone_number: phoneNumber,
-      first_name: firstName,
-      last_name: lastName,
-      date_of_birth: dob,
-      gender,
-      password,
-      invite_code: inviteCode
-    });
-    setError('');
+    setLoading(true);
+    try {
+      const otp = await updateRegistrationStep(2, {
+        phone_number: phoneNumber,
+        first_name: firstName,
+        last_name: lastName,
+        date_of_birth: dob,
+        gender,
+        password,
+        invite_code: inviteCode
+      });
+      if (otp) {
+        setVerificationOtp(otp);
+      } else {
+        setError('Failed to generate verification OTP from server. Make sure the phone number is valid.');
+      }
+    } catch (err: any) {
+      setError(err.message || 'Registration step 1 failed.');
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const handleSimulateVerify = () => {
-    updateRegistrationStep(3, {});
-  };
-
-  const handleStep3Submit = (e: React.FormEvent) => {
+  const handleStep3Submit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (bio.length < 20) return setError('Biography must be at least 20 characters');
     if (interests.length < 3) return setError('Please select at least 3 interests');
 
-    updateRegistrationStep(4, {
-      biography: bio,
-      height_cm: height,
-      city_lives: cityLives,
-      city_birth: cityBirth,
-      interests,
-      fun_question: funQ,
-      fun_answer: funA
-    });
-    setError('');
+    setLoading(true);
+    try {
+      const selectedInts = interests.map(idStr => {
+        const id = parseInt(idStr, 10);
+        return MOCK_INTERESTS.find(i => i.id === id);
+      }).filter(Boolean);
+
+      await updateProfile({
+        biography: bio,
+        height_cm: parseInt(height, 10),
+        city_lives: cityLives,
+        city_birth: cityBirth,
+        interestsList: selectedInts as any,
+        fun_question: funQ,
+        fun_answer: funA
+      });
+
+      updateRegistrationStep(4, {});
+      setError('');
+    } catch (err: any) {
+      setError(err.message || 'Failed to save profile specifications.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   const toggleInterest = (interestId: string) => {
@@ -110,22 +162,22 @@ export const RegisterPage: React.FC = () => {
     if (!files) return;
 
     const newPhotos = [...uploadedPhotos];
+    const newFiles = [...photoFiles];
     for (let i = 0; i < files.length; i++) {
       const file = files[i];
       if (file) {
         const objectUrl = URL.createObjectURL(file);
         newPhotos.push(objectUrl);
+        newFiles.push(file);
       }
     }
     setUploadedPhotos(newPhotos);
+    setPhotoFiles(newFiles);
   };
 
   const deletePhoto = (index: number) => {
-    if (uploadedPhotos.length <= 3) {
-      setError('You must keep at least 3 photos');
-      return;
-    }
     setUploadedPhotos(prev => prev.filter((_, idx) => idx !== index));
+    setPhotoFiles(prev => prev.filter((_, idx) => idx !== index));
     setError('');
   };
 
@@ -138,15 +190,28 @@ export const RegisterPage: React.FC = () => {
     list[index] = list[targetIdx]!;
     list[targetIdx] = temp!;
     setUploadedPhotos(list);
+
+    const filesList = [...photoFiles];
+    const tempFile = filesList[index];
+    filesList[index] = filesList[targetIdx]!;
+    filesList[targetIdx] = tempFile!;
+    setPhotoFiles(filesList);
   };
 
-  const handleCompleteRegistration = () => {
-    if (uploadedPhotos.length < 3) {
+  const handleCompleteRegistration = async () => {
+    if (photoFiles.length < 3) {
       setError('You must upload at least 3 photos');
       return;
     }
-    completeRegistration({}, uploadedPhotos);
-    navigate('/swipe');
+    setLoading(true);
+    try {
+      await completeRegistration({}, photoFiles);
+      navigate('/swipe');
+    } catch (err: any) {
+      setError(err.response?.data?.error || err.message || 'Failed to upload photos.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -157,7 +222,7 @@ export const RegisterPage: React.FC = () => {
           <div className="w-10 h-10 bg-primary border-4 border-black flex items-center justify-center text-white font-pixel font-bold text-lg shadow-pixel-sm">
             B
           </div>
-          <span className="font-pixel text-xl text-white tracking-widest">BUMBUL</span>
+          <span className="font-pixel text-xl text-white tracking-widest">BUMBULL</span>
         </div>
 
         {/* Wizard Header Progress Bar */}
@@ -247,16 +312,9 @@ export const RegisterPage: React.FC = () => {
                 />
               </div>
 
-              <PixelInput
-                label="Invite Code (Optional)"
-                placeholder="e.g., CODESX"
-                value={inviteCode}
-                onChange={(e) => setInviteCode(e.target.value)}
-              />
-
               <div className="flex flex-col gap-4 mt-4">
-                <PixelButton type="submit" variant="primary" className="py-3">
-                  CONTINUE TO VERIFY
+                <PixelButton type="submit" variant="primary" className="py-3" disabled={loading}>
+                  {loading ? 'DRAFTING...' : 'CONTINUE TO VERIFY'}
                 </PixelButton>
                 <div className="text-center">
                   <span className="font-mono text-sm text-muted">Already a player? </span>
@@ -293,7 +351,8 @@ export const RegisterPage: React.FC = () => {
               <div className="font-mono text-sm text-muted">
                 <p className="mb-2"><b>1.</b> Open Telegram Bot: <a href="https://t.me/bumbullbot" target="_blank" className="text-primary hover:underline">@bumbullbot</a></p>
                 <p className="mb-2"><b>2.</b> Send code: <b>{verificationOtp}</b></p>
-                <p><b>3.</b> Press share contact so the bot verifies your phone.</p>
+                <p className="mb-3"><b>3.</b> Share your contact and upload a selfie when prompted.</p>
+                <p className="mb-2 text-warning"><b>Note:</b> After the admin reviews and approves your selfie, your account will be activated, and you will be notified on Telegram.</p>
               </div>
 
               <a
@@ -306,15 +365,17 @@ export const RegisterPage: React.FC = () => {
               </a>
 
               <div className="border-t-2 border-black my-2"></div>
-              <span className="font-pixel text-[8px] text-muted block animate-pulse text-center">AWAITING TELEGRAM WEBHOOK...</span>
+              <p className="font-mono text-[10px] text-muted text-center">
+                Once the bot notifies you that your account is active, proceed to the login page to complete your profile!
+              </p>
 
-              <PixelButton onClick={handleSimulateVerify} variant="success" className="py-3">
-                SIMULATE TELEGRAM VERIFICATION SUCCESS
+              <PixelButton onClick={() => navigate('/login')} variant="success" className="py-3 mt-2">
+                PROCEED TO LOGIN Page
               </PixelButton>
 
               <button
                 onClick={() => updateRegistrationStep(1, {})}
-                className="font-pixel text-[8px] text-muted text-center hover:underline mt-2"
+                className="font-pixel text-[8px] text-muted text-center hover:underline mt-2 cursor-pointer"
               >
                 BACK TO STEP 1
               </button>
@@ -388,9 +449,10 @@ export const RegisterPage: React.FC = () => {
                 </div>
               </div>
 
-              <div className="flex flex-col gap-4">
+              <div className="flex flex-col gap-2">
+                <label className="font-pixel text-[10px] text-muted">FUN QUESTION</label>
                 <PixelSelect
-                  label="Fun Question"
+                  label=""
                   value={funQ}
                   onChange={(e) => setFunQ(e.target.value)}
                   options={[
@@ -406,8 +468,8 @@ export const RegisterPage: React.FC = () => {
                 />
               </div>
 
-              <PixelButton type="submit" variant="primary" className="py-3 mt-4">
-                CONTINUE TO PHOTOS
+              <PixelButton type="submit" variant="primary" className="py-3 mt-4" disabled={loading}>
+                {loading ? 'SAVING...' : 'CONTINUE TO PHOTOS'}
               </PixelButton>
             </form>
           )}
@@ -428,11 +490,7 @@ export const RegisterPage: React.FC = () => {
                 {uploadedPhotos.map((photo, index) => (
                   <div key={index} className="relative bg-secondary border-4 border-black p-1 shadow-pixel-sm group">
                     <div className="aspect-square bg-[#0f3460] flex items-center justify-center text-4xl overflow-hidden">
-                      {photo.startsWith('blob:') || photo.startsWith('data:') ? (
-                        <img src={photo} alt="" className="w-full h-full object-cover" />
-                      ) : (
-                        <span>{photo}</span>
-                      )}
+                      <img src={photo} alt="" className="w-full h-full object-cover" />
                     </div>
                     {/* Primary Badge */}
                     {index === 0 && (
@@ -486,13 +544,13 @@ export const RegisterPage: React.FC = () => {
                 )}
               </div>
 
-              <PixelButton onClick={handleCompleteRegistration} variant="success" className="py-3 mt-6">
-                FINALIZE CHARACTER
+              <PixelButton onClick={handleCompleteRegistration} variant="success" className="py-3 mt-6" disabled={loading}>
+                {loading ? 'FINALIZING...' : 'FINALIZE CHARACTER'}
               </PixelButton>
 
               <button
                 onClick={() => updateRegistrationStep(3, {})}
-                className="font-pixel text-[8px] text-muted text-center hover:underline"
+                className="font-pixel text-[8px] text-muted text-center hover:underline cursor-pointer"
               >
                 BACK TO STEP 3
               </button>
@@ -503,3 +561,5 @@ export const RegisterPage: React.FC = () => {
     </div>
   );
 };
+
+export default RegisterPage;

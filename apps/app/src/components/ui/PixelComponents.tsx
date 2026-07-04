@@ -89,9 +89,13 @@ interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {
 export const PixelInput: React.FC<InputProps> = ({
   label,
   error,
+  type,
   className = '',
   ...props
 }) => {
+  const [showPassword, setShowPassword] = React.useState(false);
+  const isPassword = type === 'password';
+
   return (
     <div className="flex flex-col gap-2 w-full text-left">
       {label && (
@@ -99,10 +103,24 @@ export const PixelInput: React.FC<InputProps> = ({
           {label.toUpperCase()}
         </label>
       )}
-      <input
-        className={`w-full border-4 border-black bg-bg p-3 font-mono text-base text-text focus:outline-none focus:border-primary placeholder:text-muted/60 ${className}`}
-        {...props}
-      />
+      <div className="relative w-full">
+        <input
+          type={isPassword && showPassword ? 'text' : type}
+          className={`w-full border-4 border-black bg-bg p-3 font-mono text-base text-text focus:outline-none focus:border-primary placeholder:text-muted/60 ${
+            isPassword ? 'pr-16' : ''
+          } ${className}`}
+          {...props}
+        />
+        {isPassword && (
+          <button
+            type="button"
+            onClick={() => setShowPassword(!showPassword)}
+            className="absolute right-3 top-1/2 -translate-y-1/2 font-pixel text-[9px] bg-primary hover:bg-primary/80 border-2 border-black text-white px-2 py-1 cursor-pointer select-none active:translate-x-[1px] active:translate-y-[-1px] transition-all"
+          >
+            {showPassword ? 'HIDE' : 'SHOW'}
+          </button>
+        )}
+      </div>
       {error && (
         <span className="font-pixel text-[9px] text-[#f43f5e] mt-1">
           * {error.toUpperCase()}

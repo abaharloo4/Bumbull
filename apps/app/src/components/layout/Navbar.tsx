@@ -1,6 +1,6 @@
 import React from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { Heart, Search, MessageSquare, User, Settings, LogOut } from 'lucide-react';
+import { Heart, MessageSquare, User, Settings, LogOut, Calendar, Sparkles } from 'lucide-react';
 import { useMockStore } from '../../store/mockStore';
 
 export const Navbar: React.FC = () => {
@@ -10,8 +10,9 @@ export const Navbar: React.FC = () => {
 
   const navItems = [
     { path: '/swipe', label: 'Swipe', icon: <Heart size={20} /> },
-    { path: '/discovery', label: 'Discover', icon: <Search size={20} /> },
-    { path: '/matches', label: 'Matches', icon: <MessageSquare size={20} /> },
+    { path: '/matches', label: 'Matches', icon: <Sparkles size={20} /> },
+    { path: '/chats', label: 'Chats', icon: <MessageSquare size={20} /> },
+    { path: '/events', label: 'Events', icon: <Calendar size={20} /> },
     { path: `/profile/me`, label: 'Profile', icon: <User size={20} /> },
     { path: '/settings', label: 'Settings', icon: <Settings size={20} /> },
   ];
@@ -31,7 +32,7 @@ export const Navbar: React.FC = () => {
             <div className="w-10 h-10 bg-primary border-4 border-black flex items-center justify-center text-white font-pixel font-bold text-lg shadow-pixel-sm">
               B
             </div>
-            <span className="font-pixel text-lg text-white tracking-wider">BUMBUL</span>
+            <span className="font-pixel text-lg text-white tracking-wider">BUMBULL</span>
           </div>
 
           {/* Current User Card */}
@@ -40,8 +41,12 @@ export const Navbar: React.FC = () => {
               className="border-2 border-black p-3 bg-bg flex items-center gap-3 cursor-pointer hover:bg-bg/80 active:translate-x-[2px] active:translate-y-[2px]"
               onClick={() => navigate(`/profile/${currentUser.slug || 'me'}`)}
             >
-              <div className="w-10 h-10 border-2 border-black bg-secondary flex items-center justify-center text-xl">
-                {currentUser.avatarEmoji || '🧔'}
+              <div className="w-10 h-10 border-2 border-black bg-secondary flex items-center justify-center text-xl overflow-hidden">
+                {currentUser.photosList && currentUser.photosList.length > 0 ? (
+                  <img src={currentUser.photosList[0].image_url} alt="" className="w-full h-full object-cover" />
+                ) : (
+                  currentUser.avatarEmoji || '🧔'
+                )}
               </div>
               <div className="text-left overflow-hidden">
                 <div className="font-pixel text-[10px] text-white truncate">{currentUser.first_name.toUpperCase()}</div>
@@ -89,7 +94,7 @@ export const Navbar: React.FC = () => {
           <div className="w-8 h-8 bg-primary border-4 border-black flex items-center justify-center text-white font-pixel font-bold text-sm">
             B
           </div>
-          <span className="font-pixel text-sm text-white tracking-wider">BUMBUL</span>
+          <span className="font-pixel text-sm text-white tracking-wider">BUMBULL</span>
         </div>
         <button
           onClick={handleLogout}

@@ -7,17 +7,14 @@ export const LoginPage: React.FC = () => {
   const navigate = useNavigate();
   const login = useMockStore((state) => state.login);
   
-  const [activeTab, setActiveTab] = useState<'password' | 'otp'>('password');
   const [phone, setPhone] = useState('');
   const [password, setPassword] = useState('');
-  
-  // OTP States
-  const [otpSent, setOtpSent] = useState(false);
-  const [generatedOtp, setGeneratedOtp] = useState('');
   const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
 
-  const handlePasswordLogin = (e: React.FormEvent) => {
+  const handlePasswordLogin = async (e: React.FormEvent) => {
     e.preventDefault();
+    setError('');
     if (!phone) {
       setError('Phone number is required');
       return;
@@ -27,28 +24,19 @@ export const LoginPage: React.FC = () => {
       return;
     }
 
-    login(phone);
-    navigate('/swipe');
-  };
-
-  const handleGenerateOtp = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!phone) {
-      setError('Phone number is required');
-      return;
+    setLoading(true);
+    try {
+      const success = await login(phone, password);
+      if (success) {
+        navigate('/swipe');
+      } else {
+        setError('Invalid phone number or password. Make sure your account is active (verified via bot & approved by admin).');
+      }
+    } catch (err: any) {
+      setError(err.message || 'Login failed.');
+    } finally {
+      setLoading(false);
     }
-
-    // Mock generating a 6-digit OTP code
-    const mockOtp = Math.floor(100000 + Math.random() * 900000).toString();
-    setGeneratedOtp(mockOtp);
-    setOtpSent(true);
-    setError('');
-  };
-
-  const simulateOtpVerify = () => {
-    // When simulating verify (polling or click verify)
-    login(phone);
-    navigate('/swipe');
   };
 
   return (
@@ -66,28 +54,8 @@ export const LoginPage: React.FC = () => {
           <div className="w-16 h-16 bg-primary border-4 border-black flex items-center justify-center text-white font-pixel font-bold text-3xl shadow-pixel animate-bounce">
             B
           </div>
-          <span className="font-pixel text-2xl text-white tracking-widest">BUMBUL</span>
+          <span className="font-pixel text-2xl text-white tracking-widest">BUMBULL</span>
           <span className="font-pixel text-[9px] text-muted tracking-wider">RETRO DATING NETWORK</span>
-        </div>
-
-        {/* Tab Switcher */}
-        <div className="flex border-4 border-black mb-6">
-          <button
-            onClick={() => { setActiveTab('password'); setError(''); }}
-            className={`flex-1 py-3 font-pixel text-[10px] border-r-4 border-black cursor-pointer ${
-              activeTab === 'password' ? 'bg-primary text-white' : 'bg-surface text-text hover:text-white'
-            }`}
-          >
-            PASSWORD LOGIN
-          </button>
-          <button
-            onClick={() => { setActiveTab('otp'); setError(''); }}
-            className={`flex-1 py-3 font-pixel text-[10px] cursor-pointer ${
-              activeTab === 'otp' ? 'bg-primary text-white' : 'bg-surface text-text hover:text-white'
-            }`}
-          >
-            TELEGRAM OTP
-          </button>
         </div>
 
         {/* Card Panel */}
@@ -98,27 +66,27 @@ export const LoginPage: React.FC = () => {
             </div>
           )}
 
-          {activeTab === 'password' ? (
-            <form onSubmit={handlePasswordLogin} className="flex flex-col gap-6">
-              <PixelInput
-                label="Phone Number"
-                placeholder="e.g., 09123456789"
-                value={phone}
-                onChange={(e) => setPhone(e.target.value)}
-                maxLength={11}
-              />
-              <PixelInput
-                label="Password"
-                type="password"
-                placeholder="••••••••"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-              />
-              <div className="mt-4 flex flex-col gap-4">
-                <PixelButton type="submit" variant="primary" className="py-3">
-                  ENTER APP
-                </PixelButton>
-                <div className="text-center">
+          <form onSubmit={handlePasswordLogin} className="flex flex-col gap-6">
+            <PixelInput
+              label="Phone Number"
+              placeholder="e.g., 09123456789"
+              value={phone}
+              onChange={(e) => setPhone(e.target.value)}
+              maxLength={11}
+            />
+            <PixelInput
+              label="Password"
+              type="password"
+              placeholder="••••••••"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+            />
+            <div className="mt-4 flex flex-col gap-4">
+              <PixelButton type="submit" variant="primary" className="py-3" disabled={loading}>
+                {loading ? 'AUTHENTICATING...' : 'ENTER APP'}
+              </PixelButton>
+              <div className="text-center flex flex-col gap-2">
+                <div>
                   <span className="font-mono text-sm text-muted">New player? </span>
                   <button
                     type="button"
@@ -128,69 +96,19 @@ export const LoginPage: React.FC = () => {
                     CREATE CHARACTER
                   </button>
                 </div>
+                <button
+                  type="button"
+                  onClick={() => navigate('/password-reset')}
+                  className="font-pixel text-[8px] text-muted hover:text-white hover:underline mt-1"
+                >
+                  LOST PASSWORD? RECOVER KEY
+                </button>
               </div>
-            </form>
-          ) : (
-            <div className="flex flex-col gap-6">
-              {!otpSent ? (
-                <form onSubmit={handleGenerateOtp} className="flex flex-col gap-6">
-                  <p className="font-mono text-sm text-muted mb-2">
-                    Enter your phone number. We will generate a registration/login OTP code which you must send to our Telegram Bot.
-                  </p>
-                  <PixelInput
-                    label="Phone Number"
-                    placeholder="e.g., 09123456789"
-                    value={phone}
-                    onChange={(e) => setPhone(e.target.value)}
-                    maxLength={11}
-                  />
-                  <PixelButton type="submit" variant="accent" className="py-3 text-black">
-                    GENERATE OTP
-                  </PixelButton>
-                </form>
-              ) : (
-                <div className="flex flex-col gap-6 text-center">
-                  <div className="border-4 border-black bg-bg p-6">
-                    <span className="font-pixel text-[9px] text-muted block mb-3">YOUR SECRET OTP</span>
-                    <span className="font-pixel text-4xl text-accent tracking-widest block animate-pulse">
-                      {generatedOtp}
-                    </span>
-                  </div>
-
-                  <div className="text-left font-mono text-sm text-muted">
-                    <p className="mb-2"><b>1.</b> Open Telegram Bot: <a href="https://t.me/bumbullbot" target="_blank" className="text-primary hover:underline">@bumbullbot</a></p>
-                    <p className="mb-2"><b>2.</b> Start the bot & send the 6-digit code above.</p>
-                    <p><b>3.</b> Share your phone number when prompted.</p>
-                  </div>
-
-                  <a
-                    href="https://t.me/bumbullbot"
-                    target="_blank"
-                    rel="noreferrer"
-                    className="w-full py-3 bg-secondary border-4 border-black text-white font-pixel text-xs shadow-pixel-sm block hover:translate-x-[1px] hover:translate-y-[1px]"
-                  >
-                    OPEN TELEGRAM BOT
-                  </a>
-
-                  {/* Polling simulation trigger */}
-                  <div className="border-t-2 border-black my-2"></div>
-                  <span className="font-pixel text-[8px] text-muted block animate-pulse">POLLING TELEGRAM BOT FOR VERIFICATION...</span>
-                  <PixelButton onClick={simulateOtpVerify} variant="success" className="py-3">
-                    SIMULATE VERIFICATION SUCCESS
-                  </PixelButton>
-                  
-                  <button
-                    onClick={() => setOtpSent(false)}
-                    className="font-pixel text-[8px] text-muted hover:underline"
-                  >
-                    GO BACK
-                  </button>
-                </div>
-              )}
             </div>
-          )}
+          </form>
         </PixelCard>
       </div>
     </div>
   );
 };
+export default LoginPage;

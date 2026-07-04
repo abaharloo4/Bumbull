@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Mail, MessageSquare, HelpCircle, Send } from 'lucide-react';
+import { Mail, MessageSquare, Send } from 'lucide-react';
 
 export default function ContactPage() {
   const router = useRouter();

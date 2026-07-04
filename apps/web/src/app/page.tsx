@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import { Heart, MessageSquare, Users, Zap, Check, ExternalLink } from 'lucide-react';
+import { Heart, MessageSquare, Users, Check, ExternalLink } from 'lucide-react';
 
 interface HeartConfig {
   id: number;
@@ -11,7 +11,6 @@ interface HeartConfig {
 }
 
 export default function Home() {
-  const [copied, setCopied] = useState(false);
   const [hearts, setHearts] = useState<HeartConfig[]>([]);
   const registerUrl = '/register';
 
@@ -91,12 +90,14 @@ export default function Home() {
           <div className="w-10 h-10 bg-primary border-4 border-black flex items-center justify-center text-white font-pixel font-bold text-lg shadow-pixel-sm">
             B
           </div>
-          <span className="font-pixel text-xl text-white tracking-wider">BUMBUL</span>
+          <span className="font-pixel text-xl text-white tracking-wider">BUMBULL</span>
         </div>
         <nav className="hidden md:flex items-center gap-8 font-pixel text-xs">
-          <a href="/features" className="hover:text-primary transition-colors">FEATURES</a>
-          <a href="/membership" className="hover:text-primary transition-colors">MEMBERSHIP</a>
-          <a href="/how-it-works" className="hover:text-primary transition-colors">HOW IT WORKS</a>
+          <a href="#features" className="hover:text-primary transition-colors">FEATURES</a>
+          <a href="#pricing" className="hover:text-primary transition-colors">MEMBERSHIP</a>
+          <a href="#how-it-works" className="hover:text-primary transition-colors">HOW IT WORKS</a>
+          <a href="#safety" className="hover:text-primary transition-colors">SAFETY</a>
+          <a href="#faq" className="hover:text-primary transition-colors">FAQ</a>
         </nav>
         <div className="flex gap-4">
           <a
@@ -189,9 +190,9 @@ export default function Home() {
               <div className="w-14 h-14 bg-accent border-4 border-black flex items-center justify-center text-black mb-6 shadow-pixel-sm">
                 <Users size={28} />
               </div>
-              <h3 className="font-pixel text-lg text-white mb-4">INVITE & EARN</h3>
+              <h3 className="font-pixel text-lg text-white mb-4">RETRO EVENTS</h3>
               <p className="font-mono text-muted text-base leading-relaxed">
-                Share your unique invite code with friends to unlock special membership tiers and increase your swipe quotas.
+                Attend local themed coordinate meetups in your city. RSVP to events, unlock group chatrooms, and meet matches in person.
               </p>
             </div>
           </div>
@@ -368,33 +369,84 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Invite & Referral Section */}
-      <section className="relative z-10 border-t-4 border-black bg-bg px-6 py-24 text-center">
-        <div className="max-w-4xl mx-auto border-4 border-black bg-surface p-12 shadow-pixel">
-          <div className="w-16 h-16 bg-accent border-4 border-black flex items-center justify-center text-black mx-auto mb-6 shadow-pixel-sm">
-            <Zap size={32} />
+      {/* Safety & Verification Section */}
+      <section id="safety" className="relative z-10 border-t-4 border-black bg-bg px-6 py-24">
+        <div className="max-w-6xl mx-auto">
+          <div className="text-center mb-16">
+            <h2 className="font-pixel text-2xl md:text-4xl text-white mb-4">100% VERIFIED COMMUNITY</h2>
+            <p className="font-mono text-lg text-muted">No catfishes. Safe retro matching.</p>
+            <div className="w-32 h-2 bg-primary mx-auto border-2 border-black mt-4"></div>
           </div>
-          <h2 className="font-pixel text-xl md:text-3xl text-white mb-6">INVITE FRIENDS & GET BOOST</h2>
-          <p className="font-mono text-lg text-muted max-w-2xl mx-auto mb-10 leading-relaxed">
-            Every user gets a unique referral code. When a new user signs up with your invite code, your match compatibility rankings and quotas increase. Get sharing!
-          </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center items-center max-w-md mx-auto">
-            <input
-              type="text"
-              readOnly
-              value="BUMBUL-REFERRAL-BOT"
-              className="w-full sm:flex-1 py-3 px-4 border-4 border-black bg-bg text-accent font-pixel text-xs text-center focus:outline-none"
-            />
-            <button
-              onClick={() => {
-                navigator.clipboard.writeText('BUMBUL-REFERRAL-BOT');
-                setCopied(true);
-                setTimeout(() => setCopied(false), 2000);
-              }}
-              className="w-full sm:w-auto py-3 px-6 bg-accent border-4 border-black text-black font-pixel text-xs shadow-pixel-sm active:translate-x-[2px] active:translate-y-[2px] active:shadow-none hover:bg-opacity-90 transition-all"
-            >
-              {copied ? 'COPIED!' : 'COPY CODE'}
-            </button>
+          
+          <div className="border-4 border-black bg-surface p-8 md:p-12 shadow-pixel max-w-4xl mx-auto flex flex-col md:flex-row gap-8 items-center">
+            <div className="text-6xl animate-pulse">🛡️</div>
+            <div className="text-left">
+              <h3 className="font-pixel text-lg text-accent mb-4">TELEGRAM SELFIE VERIFICATION</h3>
+              <p className="font-mono text-base text-text leading-relaxed">
+                To keep our community safe, every user is required to link their phone number and submit a selfie via our Telegram bot. Our admin team manually reviews and approves each user within 24 hours, awarding them a verification badge.
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Testimonials Section */}
+      <section id="stories" className="relative z-10 border-t-4 border-black bg-surface px-6 py-24">
+        <div className="max-w-6xl mx-auto">
+          <div className="text-center mb-16">
+            <h2 className="font-pixel text-2xl md:text-4xl text-white mb-4">SUCCESS STORIES</h2>
+            <div className="w-32 h-2 bg-secondary mx-auto border-2 border-black"></div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+            <div className="bg-bg border-4 border-black p-8 shadow-pixel relative">
+              <div className="font-pixel text-accent text-xs mb-3">💬 MATCHED IN TEHRAN</div>
+              <p className="font-mono text-base text-text leading-relaxed mb-6">
+                &quot;We matched on Bumbull because of our shared interest in retro arcade gaming. The pixel art aesthetic is what drew us in, but the real-time chat made us stay. We just celebrated our anniversary!&quot;
+              </p>
+              <div className="font-pixel text-xs text-muted">— Nima & Sahar</div>
+            </div>
+
+            <div className="bg-bg border-4 border-black p-8 shadow-pixel relative">
+              <div className="font-pixel text-accent text-xs mb-3">💬 MET AT SHIRAZ EVENT</div>
+              <p className="font-mono text-base text-text leading-relaxed mb-6">
+                &quot;I attended a Bumbull Boardgames meetup in Shiraz. I met so many cool people and ended up matching with someone I played arcade games with. The coordinate events are awesome!&quot;
+              </p>
+              <div className="font-pixel text-xs text-muted">— Arash & Yasaman</div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* FAQ Section */}
+      <section id="faq" className="relative z-10 border-t-4 border-black bg-bg px-6 py-24">
+        <div className="max-w-4xl mx-auto">
+          <div className="text-center mb-16">
+            <h2 className="font-pixel text-2xl md:text-4xl text-white mb-4">FREQUENTLY ASKED QUESTIONS</h2>
+            <div className="w-32 h-2 bg-primary mx-auto border-2 border-black"></div>
+          </div>
+
+          <div className="space-y-6">
+            <div className="border-4 border-black bg-surface p-6 shadow-pixel-sm">
+              <h3 className="font-pixel text-sm text-white mb-2">IS BUMBULL FREE TO USE?</h3>
+              <p className="font-mono text-base text-muted">
+                Yes! The default Bronze tier is 100% free and allows up to 50 swipes and 1 super like every single day.
+              </p>
+            </div>
+
+            <div className="border-4 border-black bg-surface p-6 shadow-pixel-sm">
+              <h3 className="font-pixel text-sm text-white mb-2">HOW LONG DOES VERIFICATION TAKE?</h3>
+              <p className="font-mono text-base text-muted">
+                Once you submit your selfie to @bumbullbot, our admins manually verify your profile. This usually takes between 1 to 24 hours.
+              </p>
+            </div>
+
+            <div className="border-4 border-black bg-surface p-6 shadow-pixel-sm">
+              <h3 className="font-pixel text-sm text-white mb-2">HOW DO RETRO EVENTS WORK?</h3>
+              <p className="font-mono text-base text-muted">
+                Users can find retro events and meetups in their city on the Events page. Once you RSVP, you&apos;ll be added to the event chat group and receive the exact coordinate address.
+              </p>
+            </div>
           </div>
         </div>
       </section>
@@ -406,7 +458,7 @@ export default function Home() {
             <div className="w-8 h-8 bg-primary border-4 border-black flex items-center justify-center text-white font-pixel font-bold text-sm">
               B
             </div>
-            <span className="font-pixel text-sm text-white">BUMBUL PROJECT</span>
+            <span className="font-pixel text-sm text-white">BUMBULL PROJECT</span>
           </div>
 
           <div className="flex flex-wrap justify-center gap-8 font-pixel text-[10px]">
@@ -420,7 +472,7 @@ export default function Home() {
           </div>
         </div>
         <div className="text-center font-mono text-xs text-muted mt-8 border-t-2 border-black pt-6 max-w-6xl mx-auto">
-          © {new Date().getFullYear()} Bumbul. All rights reserved. Powered by pixel art & love.
+          © {new Date().getFullYear()} Bumbull. All rights reserved. Powered by pixel art & love.
         </div>
       </footer>
     </div>

@@ -4,18 +4,30 @@ import { useMockStore } from './store/mockStore';
 import { Navbar } from './components/layout/Navbar';
 import { LoginPage } from './routes/auth/LoginPage';
 import { RegisterPage } from './routes/auth/RegisterPage';
+import { PasswordResetPage } from './routes/auth/PasswordResetPage';
 import { SwipePage } from './routes/swipe/SwipePage';
-import { DiscoveryPage } from './routes/discovery/DiscoveryPage';
 import { MatchesPage } from './routes/matches/MatchesPage';
+import { ChatsListPage } from './routes/matches/ChatsListPage';
 import { ChatPage } from './routes/chat/ChatPage';
 import { ProfilePage } from './routes/profile/ProfilePage';
 import { EditProfilePage } from './routes/profile/EditProfilePage';
 import { SettingsPage } from './routes/settings/SettingsPage';
+import { EventsPage } from './routes/events/EventsPage';
+import { EventDetailPage } from './routes/events/EventDetailPage';
 
 // Protected Route wrapper component
 const AuthGuard: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const isAuthenticated = useMockStore((state) => state.isAuthenticated);
+  const { isAuthenticated, isCheckingAuth } = useMockStore();
   const location = useLocation();
+
+  if (isCheckingAuth) {
+    return (
+      <div className="min-h-screen bg-bg flex flex-col items-center justify-center font-pixel text-white text-xs select-none">
+        <div className="animate-pulse mb-2">LOADING SYSTEM...</div>
+        <div className="text-accent">SYNCHRONIZING COORDINATES</div>
+      </div>
+    );
+  }
 
   if (!isAuthenticated) {
     return <Navigate to="/login" state={{ from: location }} replace />;
@@ -35,8 +47,10 @@ const AppLayout: React.FC = () => {
       <main className="flex-1 pb-20 md:pb-0 overflow-y-auto min-h-[calc(100vh-160px)] md:min-h-screen">
         <Routes>
           <Route path="swipe" element={<SwipePage />} />
-          <Route path="discovery" element={<DiscoveryPage />} />
           <Route path="matches" element={<MatchesPage />} />
+          <Route path="chats" element={<ChatsListPage />} />
+          <Route path="events" element={<EventsPage />} />
+          <Route path="events/:eventId" element={<EventDetailPage />} />
           <Route path="chat/:matchId" element={<ChatPage />} />
           <Route path="profile/:slug" element={<ProfilePage />} />
           <Route path="profile/me" element={<ProfilePage />} />
@@ -51,35 +65,11 @@ const AppLayout: React.FC = () => {
 };
 
 function App() {
-  React.useEffect(() => {
-    const getCookie = (name: string): string | null => {
-      if (typeof document === 'undefined') return null;
-      const nameEQ = name + "=";
-      const ca = document.cookie.split(';');
-      for (let i = 0; i < ca.length; i++) {
-        let c = ca[i];
-        while (c && c.charAt(0) === ' ') c = c.substring(1, c.length);
-        if (c && c.indexOf(nameEQ) === 0) return decodeURIComponent(c.substring(nameEQ.length, c.length));
-      }
-      return null;
-    };
+  const checkAuth = useMockStore((state) => state.checkAuth);
 
-    const loggedIn = getCookie('mock_logged_in') === 'true';
-    if (loggedIn) {
-      const userDataStr = getCookie('mock_user_data');
-      if (userDataStr) {
-        try {
-          const userData = JSON.parse(userDataStr);
-          useMockStore.getState().loginWithCookieData(userData);
-        } catch (e) {
-          console.error('Error parsing mock_user_data cookie:', e);
-        }
-      } else {
-        const phoneNumber = getCookie('mock_phone_number') || '+989123456789';
-        useMockStore.getState().login(phoneNumber);
-      }
-    }
-  }, []);
+  React.useEffect(() => {
+    checkAuth();
+  }, [checkAuth]);
 
   return (
     <BrowserRouter>
@@ -87,6 +77,7 @@ function App() {
         {/* Public Routes */}
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<RegisterPage />} />
+        <Route path="/password-reset" element={<PasswordResetPage />} />
 
         {/* Private Routes (Protected via AuthGuard) */}
         <Route

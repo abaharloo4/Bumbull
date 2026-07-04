@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { useRouter } from 'next/navigation';
-import { Check, Star, ShieldAlert } from 'lucide-react';
+import { Check, Star } from 'lucide-react';
 
 export default function MembershipPage() {
   const router = useRouter();

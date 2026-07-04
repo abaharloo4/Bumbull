@@ -8,14 +8,38 @@ import { Send, ArrowLeft } from 'lucide-react';
 export const ChatPage: React.FC = () => {
   const { matchId } = useParams<{ matchId: string }>();
   const navigate = useNavigate();
-  const { matches, chatMessages, sendMessage, currentUser } = useMockStore();
+  const idNum = parseInt(matchId || '', 10);
+
+  const {
+    matches,
+    chatMessages,
+    sendMessage,
+    currentUser,
+    partnerOnlineStatus,
+    partnerTypingStatus,
+    connectChatWebSocket,
+    disconnectChatWebSocket,
+    sendChatTyping,
+    fetchChatMessages,
+  } = useMockStore();
 
   const [inputVal, setInputVal] = useState('');
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  const activeMatch = matches.find(m => m.id === parseInt(matchId || '', 10));
+  const activeMatch = matches.find(m => m.id === idNum);
   const partner = activeMatch ? (activeMatch.user2 as MockUser) : null;
   const activeMessages = activeMatch ? (chatMessages[activeMatch.id] || []) : [];
+
+  // Load chat messages and open WS connection
+  useEffect(() => {
+    if (!idNum) return;
+    fetchChatMessages(idNum);
+    connectChatWebSocket(idNum);
+
+    return () => {
+      disconnectChatWebSocket();
+    };
+  }, [idNum, fetchChatMessages, connectChatWebSocket, disconnectChatWebSocket]);
 
   const handleSend = (e: React.FormEvent) => {
     e.preventDefault();
@@ -23,6 +47,17 @@ export const ChatPage: React.FC = () => {
 
     sendMessage(activeMatch.id, inputVal.trim());
     setInputVal('');
+    sendChatTyping(activeMatch.id, false);
+  };
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setInputVal(e.target.value);
+    if (!activeMatch) return;
+    if (e.target.value.trim().length > 0) {
+      sendChatTyping(activeMatch.id, true);
+    } else {
+      sendChatTyping(activeMatch.id, false);
+    }
   };
 
   // Scroll to bottom whenever messages list updates
@@ -100,9 +135,15 @@ export const ChatPage: React.FC = () => {
               <span className="font-pixel text-xs text-white block mb-0.5">
                 {partner.first_name.toUpperCase()}
               </span>
-              <span className="font-pixel text-[6px] text-success animate-pulse block">
-                ● ONLINE
-              </span>
+              {partnerOnlineStatus[idNum]?.isOnline ? (
+                <span className="font-pixel text-[6px] text-success animate-pulse block">
+                  ● ONLINE
+                </span>
+              ) : (
+                <span className="font-pixel text-[6px] text-muted block">
+                  ○ OFFLINE
+                </span>
+              )}
             </div>
           </div>
           
@@ -143,6 +184,14 @@ export const ChatPage: React.FC = () => {
             );
           })}
           
+          {partnerTypingStatus[idNum] && (
+            <div className="flex justify-start">
+              <span className="font-pixel text-[8px] text-accent animate-pulse text-left">
+                {partner.first_name.toUpperCase()} IS TYPING SIGNAL...
+              </span>
+            </div>
+          )}
+
           {/* Scroll Target */}
           <div ref={messagesEndRef} />
         </div>
@@ -153,7 +202,7 @@ export const ChatPage: React.FC = () => {
             type="text"
             placeholder="Type your signal message..."
             value={inputVal}
-            onChange={(e) => setInputVal(e.target.value)}
+            onChange={handleInputChange}
             className="flex-1 border-4 border-black bg-bg p-3 font-mono text-sm text-text focus:outline-none focus:border-primary placeholder:text-muted/50"
           />
           <PixelButton type="submit" variant="primary" className="!px-4 !py-3">
