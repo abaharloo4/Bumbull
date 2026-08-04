@@ -1,9 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence, useMotionValue, useTransform } from 'framer-motion';
-import { Heart, X, Star, Sparkles, MessageSquare } from 'lucide-react';
+import { Heart, X, Star, Sparkles, MessageSquare, Filter } from 'lucide-react';
 import { useMockStore } from '../../store/mockStore';
-import { PixelButton, PixelCard, PixelBadge } from '../../components/ui/PixelComponents';
+import { PixelButton, PixelCard, PixelBadge, PixelSelect } from '../../components/ui/PixelComponents';
 
 export const SwipePage: React.FC = () => {
   const navigate = useNavigate();
@@ -12,8 +12,19 @@ export const SwipePage: React.FC = () => {
     swipeQueue,
     swipeQuota,
     swipeAction,
+    fetchSwipeQueue,
     currentUser
   } = useMockStore();
+
+  // Filters State
+  const [genderFilter, setGenderFilter] = useState<string>('all');
+  const [cityFilter, setCityFilter] = useState<string>('all');
+  const [showFilters, setShowFilters] = useState<boolean>(false);
+
+  // Fetch profiles on mount or when filters change
+  useEffect(() => {
+    fetchSwipeQueue({ gender: genderFilter, city: cityFilter });
+  }, [genderFilter, cityFilter, fetchSwipeQueue]);
 
   // Match alert modal overlay state
   const [matchAlert, setMatchAlert] = useState<{
@@ -55,30 +66,67 @@ export const SwipePage: React.FC = () => {
   const handleDragEnd = (_event: any, info: any) => {
     const threshold = 100;
     if (info.offset.x > threshold) {
-      // Swipe Right
       handleSwipe('like');
     } else if (info.offset.x < -threshold) {
-      // Swipe Left
       handleSwipe('pass');
     }
   };
 
   return (
     <div className="flex-1 flex flex-col justify-between p-6 select-none relative font-mono min-h-[calc(100vh-160px)] md:min-h-screen">
-      {/* Swipe Header / Quota */}
-      <div className="flex justify-between items-center bg-surface border-4 border-black p-4 mb-6">
-        <div className="text-left">
-          <span className="font-pixel text-[8px] text-muted block mb-1">SWIPE QUOTA</span>
-          <span className="font-pixel text-[10px] text-white">
-            {swipeQuota.likes_limit - swipeQuota.likes_today} LIKES LEFT
-          </span>
+      {/* Swipe Header / Quota & Filter Toggle */}
+      <div className="flex flex-col gap-3 mb-6">
+        <div className="flex justify-between items-center bg-surface border-4 border-black p-4">
+          <div className="text-left">
+            <span className="font-pixel text-[8px] text-muted block mb-1">SWIPE QUOTA</span>
+            <span className="font-pixel text-[10px] text-white">
+              {swipeQuota.likes_limit - swipeQuota.likes_today} LIKES LEFT
+            </span>
+          </div>
+          
+          <button
+            onClick={() => setShowFilters(!showFilters)}
+            className="flex items-center gap-1.5 bg-bg border-2 border-black px-3 py-1.5 font-pixel text-[8px] text-accent hover:bg-surface cursor-pointer"
+          >
+            <Filter size={12} />
+            <span>{showFilters ? 'HIDE FILTERS' : 'FILTERS'}</span>
+          </button>
+
+          <div className="text-right">
+            <span className="font-pixel text-[8px] text-muted block mb-1">SUPER LIKES</span>
+            <span className="font-pixel text-[10px] text-accent">
+              {swipeQuota.super_likes_limit - swipeQuota.super_likes_today} LEFT
+            </span>
+          </div>
         </div>
-        <div className="text-right">
-          <span className="font-pixel text-[8px] text-muted block mb-1">SUPER LIKES</span>
-          <span className="font-pixel text-[10px] text-accent">
-            {swipeQuota.super_likes_limit - swipeQuota.super_likes_today} LEFT
-          </span>
-        </div>
+
+        {/* Filter Bar Panel */}
+        {showFilters && (
+          <div className="bg-surface border-4 border-black p-4 flex flex-col sm:flex-row gap-4 text-left">
+            <PixelSelect
+              label="Gender Filter"
+              value={genderFilter}
+              onChange={(e) => setGenderFilter(e.target.value)}
+              options={[
+                { value: 'all', label: 'All Genders' },
+                { value: 'F', label: 'Female' },
+                { value: 'M', label: 'Male' }
+              ]}
+            />
+            <PixelSelect
+              label="City Filter"
+              value={cityFilter}
+              onChange={(e) => setCityFilter(e.target.value)}
+              options={[
+                { value: 'all', label: 'All Cities' },
+                { value: 'tehran', label: 'Tehran' },
+                { value: 'shiraz', label: 'Shiraz' },
+                { value: 'isfahan', label: 'Isfahan' },
+                { value: 'gorgan', label: 'Gorgan' }
+              ]}
+            />
+          </div>
+        )}
       </div>
 
       {/* Main Card Arena */}
@@ -87,14 +135,14 @@ export const SwipePage: React.FC = () => {
           {currentSwipeProfile ? (
             <div className="w-full max-w-sm h-[480px] relative">
               
-              {/* Back card 2 (for stack effect) */}
+              {/* Back card 2 (stack effect) */}
               {swipeQueue.length > 2 && (
                 <div 
                   className="absolute inset-0 bg-surface/40 border-4 border-black/40 translate-y-6 scale-90 z-0 pointer-events-none"
                 />
               )}
 
-              {/* Back card 1 (for stack effect) */}
+              {/* Back card 1 (stack effect) */}
               {swipeQueue.length > 1 && (
                 <div 
                   className="absolute inset-0 bg-surface/70 border-4 border-black/70 translate-y-3 scale-95 z-10 pointer-events-none"
@@ -140,17 +188,17 @@ export const SwipePage: React.FC = () => {
                     <div className="flex justify-between items-start mb-2">
                       <div>
                         <span className="font-pixel text-sm text-white mr-2">
-                          {currentSwipeProfile.first_name.toUpperCase()}
+                          {currentSwipeProfile.first_name?.toUpperCase()}
                         </span>
                         <span className="font-pixel text-sm text-accent">
                           {currentSwipeProfile.age}
                         </span>
                       </div>
-                      <PixelBadge tier={currentSwipeProfile.membership} />
+                      <PixelBadge tier={currentSwipeProfile.membership || 'bronze'} />
                     </div>
 
                     <div className="font-pixel text-[8px] text-muted mb-3">
-                      LIVES IN: {currentSwipeProfile.city_lives?.toUpperCase()}
+                      LIVES IN: {currentSwipeProfile.city_lives?.toUpperCase() || 'UNKNOWN'}
                     </div>
 
                     <p className="font-mono text-xs text-text line-clamp-3 mb-4 leading-relaxed">
@@ -180,10 +228,10 @@ export const SwipePage: React.FC = () => {
               </div>
               <h3 className="font-pixel text-sm text-white mb-3">OUT OF PROFILES</h3>
               <p className="font-mono text-sm text-muted mb-6">
-                No more characters left in your coordinates. Check back later or expand your discovery filters!
+                No more characters left matching your current filters. Try adjusting your gender or city filter!
               </p>
-              <PixelButton onClick={() => navigate('/events')} variant="secondary" className="py-2.5">
-                RETRO EVENTS
+              <PixelButton onClick={() => fetchSwipeQueue({ gender: genderFilter, city: cityFilter })} variant="secondary" className="py-2.5">
+                REFRESH DISCOVERY
               </PixelButton>
             </div>
           )}
@@ -217,9 +265,7 @@ export const SwipePage: React.FC = () => {
         </div>
       )}
 
-      {/* ======================================= */}
-      {/* FULL-SCREEN MATCH ALERT OVERLAY         */}
-      {/* ======================================= */}
+      {/* MATCH ALERT OVERLAY */}
       <AnimatePresence>
         {matchAlert.isOpen && (
           <motion.div
@@ -228,7 +274,6 @@ export const SwipePage: React.FC = () => {
             exit={{ opacity: 0 }}
             className="fixed inset-0 bg-black/95 z-50 flex flex-col justify-center items-center px-6"
           >
-            {/* Pulsing retro visual effects */}
             <div className="absolute inset-0 overflow-hidden pointer-events-none opacity-40">
               <div className="absolute top-1/4 left-10 text-primary text-4xl animate-bounce">❤️</div>
               <div className="absolute top-1/3 right-10 text-primary text-4xl animate-pulse">❤️</div>
@@ -247,9 +292,7 @@ export const SwipePage: React.FC = () => {
 
               <h2 className="font-pixel text-2xl text-accent mb-6 animate-pulse">IT&apos;S A MATCH!</h2>
 
-              {/* Matching Avatars Duo */}
               <div className="flex items-center justify-center gap-6 mb-8">
-                {/* User Avatar */}
                 <div className="w-20 h-20 border-4 border-black bg-secondary flex items-center justify-center text-4xl relative shadow-pixel-sm">
                   {currentUser?.avatarEmoji || '🧔'}
                   <div className="absolute -top-3 -left-3 bg-primary border-2 border-black text-white font-pixel text-[6px] px-1 py-0.5">YOU</div>
@@ -257,7 +300,6 @@ export const SwipePage: React.FC = () => {
 
                 <div className="font-pixel text-xl text-primary animate-bounce">❤️</div>
 
-                {/* Partner Avatar */}
                 <div className="w-20 h-20 border-4 border-black bg-secondary flex items-center justify-center text-4xl relative shadow-pixel-sm">
                   {matchAlert.partnerEmoji}
                   <div className="absolute -top-3 -right-3 bg-accent border-2 border-black text-black font-pixel text-[6px] px-1 py-0.5">NEW</div>
@@ -265,7 +307,7 @@ export const SwipePage: React.FC = () => {
               </div>
 
               <p className="font-mono text-base text-text mb-8 leading-relaxed">
-                You and <b>{matchAlert.partnerName}</b> have liked each other. The coordinates match!
+                You and <b>{matchAlert.partnerName}</b> have liked each other!
               </p>
 
               <div className="flex flex-col gap-4">
@@ -295,3 +337,5 @@ export const SwipePage: React.FC = () => {
     </div>
   );
 };
+
+export default SwipePage;

@@ -102,6 +102,17 @@ interface MockStoreState {
   checkAuth: () => Promise<boolean>;
   login: (phoneNumber: string, password?: string) => Promise<boolean>;
   logout: () => Promise<void>;
+  
+  // Registration 6-Step API Actions (Backend 0.0.5)
+  validateInvite: (code: string) => Promise<{ success: boolean; message?: string }>;
+  registerBasicInfo: (data: any) => Promise<{ success: boolean; otp?: string; bot_username?: string; message?: string }>;
+  checkOtpStatus: (otp: string) => Promise<{ status: 'verified' | 'pending' | 'expired'; continue_token?: string; message?: string }>;
+  continueRegistration: (token: string) => Promise<{ success: boolean; message?: string }>;
+  saveProfileDetails: (data: any) => Promise<{ success: boolean; message?: string }>;
+  uploadPhotos: (files: File[]) => Promise<{ success: boolean; message?: string }>;
+  uploadSelfie: (file: File) => Promise<{ success: boolean; message?: string }>;
+  resendOtp: () => Promise<{ success: boolean; otp?: string; message?: string }>;
+
   updateRegistrationStep: (step: number, data: any) => Promise<string>;
   completeRegistration: (finalData: any, photoFiles: File[]) => Promise<void>;
   updateProfile: (updatedFields: Partial<MockUser>) => Promise<void>;
@@ -110,7 +121,7 @@ interface MockStoreState {
   addPhoto: (file: File) => Promise<void>;
   swipeAction: (profileId: number, type: 'like' | 'pass' | 'super') => Promise<{ matchCreated: boolean; matchId?: number }>;
   addReferral: (code: string) => void;
-  fetchSwipeQueue: () => Promise<void>;
+  fetchSwipeQueue: (filters?: { gender?: string; city?: string }) => Promise<void>;
   fetchMatches: () => Promise<void>;
   fetchDiscoveryUsers: (filters?: any) => Promise<void>;
 
@@ -250,6 +261,149 @@ export const useMockStore = create<MockStoreState>((set, get) => ({
       console.error('Logout failed:', e);
     }
     set({ currentUser: null, isAuthenticated: false, matches: [], chatMessages: {}, activeMatchId: null });
+  },
+
+  // Registration 6-Step API Actions (Backend 0.0.5)
+  validateInvite: async (code: string) => {
+    try {
+      await ensureCsrf();
+      const res = await api.post('/accounts/api/validate-invite/', { code });
+      if (res.data && res.data.success) {
+        set((state) => ({ regData: { ...state.regData, invite_code: code } }));
+        return { success: true, message: res.data.message };
+      }
+      return { success: false, message: res.data?.message || 'Invalid or expired invitation code.' };
+    } catch (e: any) {
+      const msg = e.response?.data?.message || e.response?.data?.error || 'Failed to validate invitation code.';
+      return { success: false, message: msg };
+    }
+  },
+
+  registerBasicInfo: async (data: any) => {
+    try {
+      await ensureCsrf();
+      const res = await api.post('/accounts/api/register-basic/', {
+        first_name: data.first_name,
+        last_name: data.last_name || '',
+        date_of_birth: data.date_of_birth,
+        gender: data.gender,
+        password: data.password,
+        confirm_password: data.confirm_password || data.password
+      });
+      if (res.data && res.data.success) {
+        set((state) => ({ regData: { ...state.regData, ...data } }));
+        return {
+          success: true,
+          otp: res.data.data?.otp,
+          bot_username: res.data.data?.bot_username,
+          message: res.data.message
+        };
+      }
+      return { success: false, message: res.data?.message || 'Basic registration failed.' };
+    } catch (e: any) {
+      const msg = e.response?.data?.message || e.response?.data?.error || 'Registration failed.';
+      return { success: false, message: msg };
+    }
+  },
+
+  checkOtpStatus: async (otp: string) => {
+    try {
+      const res = await api.get(`/accounts/api/check-otp/?otp=${otp}`);
+      if (res.data && res.data.data) {
+        return {
+          status: res.data.data.status,
+          continue_token: res.data.data.continue_token,
+          message: res.data.message
+        };
+      }
+      return { status: 'pending' };
+    } catch (e: any) {
+      return { status: 'expired', message: e.response?.data?.message || 'OTP check failed.' };
+    }
+  },
+
+  continueRegistration: async (token: string) => {
+    try {
+      await ensureCsrf();
+      const res = await api.post('/accounts/api/continue-registration/', { continue_token: token });
+      if (res.data && res.data.success) {
+        await get().checkAuth();
+        return { success: true, message: res.data.message };
+      }
+      return { success: false, message: res.data?.message || 'Verification token failed.' };
+    } catch (e: any) {
+      return { success: false, message: e.response?.data?.message || 'Verification token failed.' };
+    }
+  },
+
+  saveProfileDetails: async (data: any) => {
+    try {
+      await ensureCsrf();
+      const res = await api.post('/accounts/api/profile-details/', {
+        city_birth: data.city_birth,
+        city_lives: data.city_lives,
+        height_cm: Number(data.height_cm),
+        biography: data.biography
+      });
+      if (res.data && res.data.success) {
+        return { success: true, message: res.data.message };
+      }
+      return { success: false, message: res.data?.message || 'Failed to save profile details.' };
+    } catch (e: any) {
+      return { success: false, message: e.response?.data?.message || 'Failed to save profile details.' };
+    }
+  },
+
+  uploadPhotos: async (files: File[]) => {
+    try {
+      await ensureCsrf();
+      const formData = new FormData();
+      files.forEach((file) => {
+        formData.append('images', file);
+      });
+      const res = await api.post('/accounts/api/upload-photos/', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+      });
+      if (res.data && res.data.success) {
+        return { success: true, message: res.data.message };
+      }
+      return { success: false, message: res.data?.message || 'Failed to upload photos.' };
+    } catch (e: any) {
+      return { success: false, message: e.response?.data?.message || 'Photo upload failed.' };
+    }
+  },
+
+  uploadSelfie: async (file: File) => {
+    try {
+      await ensureCsrf();
+      const formData = new FormData();
+      formData.append('selfie', file);
+      const res = await api.post('/accounts/api/upload-selfie/', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+      });
+      if (res.data && res.data.success) {
+        if (get().currentUser) {
+          set({ currentUser: { ...get().currentUser!, is_active: false } });
+        }
+        return { success: true, message: res.data.message };
+      }
+      return { success: false, message: res.data?.message || 'Failed to upload selfie.' };
+    } catch (e: any) {
+      return { success: false, message: e.response?.data?.message || 'Selfie upload failed.' };
+    }
+  },
+
+  resendOtp: async () => {
+    try {
+      await ensureCsrf();
+      const res = await api.post('/accounts/api/resend-otp/');
+      if (res.data && res.data.success) {
+        return { success: true, otp: res.data.data?.otp, message: res.data.message };
+      }
+      return { success: false, message: res.data?.message || 'Resend failed.' };
+    } catch (e: any) {
+      return { success: false, message: e.response?.data?.message || 'Resend failed.' };
+    }
   },
 
   updateRegistrationStep: async (step: number, data: any) => {
@@ -505,7 +659,7 @@ export const useMockStore = create<MockStoreState>((set, get) => ({
   swipeAction: async (profileId: number, type: 'like' | 'pass' | 'super') => {
     try {
       await ensureCsrf();
-      const res = await api.post('/accounts/swipe/action/', {
+      const res = await api.post('/matching/swipe/action/', {
         swiped_user_id: profileId,
         swipe_type: type
       });
@@ -891,20 +1045,29 @@ export const useMockStore = create<MockStoreState>((set, get) => ({
     });
   },
 
-  fetchSwipeQueue: async () => {
+  fetchSwipeQueue: async (filters?: { gender?: string; city?: string }) => {
     try {
-      const res = await api.get('/accounts/api/swipe/');
+      const params = new URLSearchParams();
+      if (filters?.gender && filters.gender !== 'all') {
+        params.append('gender', filters.gender);
+      }
+      if (filters?.city && filters.city !== 'all') {
+        params.append('city', filters.city);
+      }
+      const queryString = params.toString() ? `?${params.toString()}` : '';
+      const res = await api.get(`/matching/api/swipe/${queryString}`);
       if (res.data) {
-        const u = res.data;
-        const formattedUser: MockUser = {
+        const data = res.data;
+        const profilesList = Array.isArray(data) ? data : (data.results || (data.id ? [data] : []));
+        const formattedList: MockUser[] = profilesList.map((u: any) => ({
           ...u,
           avatarEmoji: u.gender === 'F' ? '👩' : '🧔',
           photosList: u.photos || [],
           interestsList: u.interests || []
-        };
+        }));
         set({
-          swipeQueue: [formattedUser],
-          currentSwipeProfile: formattedUser
+          swipeQueue: formattedList,
+          currentSwipeProfile: formattedList[0] || null
         });
       } else {
         set({
@@ -913,7 +1076,11 @@ export const useMockStore = create<MockStoreState>((set, get) => ({
         });
       }
     } catch (e) {
-      console.error('Failed to fetch swipe card:', e);
+      console.error('Failed to fetch swipe queue:', e);
+      set({
+        swipeQueue: [],
+        currentSwipeProfile: null
+      });
     }
   },
 

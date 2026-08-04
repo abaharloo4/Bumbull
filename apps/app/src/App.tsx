@@ -5,6 +5,7 @@ import { Navbar } from './components/layout/Navbar';
 import { LoginPage } from './routes/auth/LoginPage';
 import { RegisterPage } from './routes/auth/RegisterPage';
 import { PasswordResetPage } from './routes/auth/PasswordResetPage';
+import { WaitForVerificationPage } from './routes/auth/WaitForVerificationPage';
 import { SwipePage } from './routes/swipe/SwipePage';
 import { MatchesPage } from './routes/matches/MatchesPage';
 import { ChatsListPage } from './routes/matches/ChatsListPage';
@@ -17,7 +18,7 @@ import { EventDetailPage } from './routes/events/EventDetailPage';
 
 // Protected Route wrapper component
 const AuthGuard: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const { isAuthenticated, isCheckingAuth } = useMockStore();
+  const { isAuthenticated, isCheckingAuth, currentUser } = useMockStore();
   const location = useLocation();
 
   if (isCheckingAuth) {
@@ -31,6 +32,11 @@ const AuthGuard: React.FC<{ children: React.ReactNode }> = ({ children }) => {
 
   if (!isAuthenticated) {
     return <Navigate to="/login" state={{ from: location }} replace />;
+  }
+
+  // Redirect to wait-verification page if account is inactive/pending admin review
+  if (currentUser && currentUser.is_active === false && location.pathname !== '/wait-verification') {
+    return <Navigate to="/wait-verification" replace />;
   }
 
   return <>{children}</>;
@@ -78,6 +84,7 @@ function App() {
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<RegisterPage />} />
         <Route path="/password-reset" element={<PasswordResetPage />} />
+        <Route path="/wait-verification" element={<WaitForVerificationPage />} />
 
         {/* Private Routes (Protected via AuthGuard) */}
         <Route
